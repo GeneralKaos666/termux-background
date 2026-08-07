@@ -9,6 +9,9 @@ keystoreProperties.load(new FileInputStream(rootProject.file("keystore.propertie
 android {
     namespace 'com.termuxbackground'
     compileSdkVersion 34
+    buildFeatures {
+        buildConfig true
+    }
     defaultConfig {
         applicationId 'com.termuxbackground'
         minSdkVersion 24

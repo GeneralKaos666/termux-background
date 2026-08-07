@@ -1,6 +1,7 @@
 package com.termuxbackground;
 
 import android.annotation.SuppressLint;
+import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_FLAG = Intent.FLAG_GRANT_READ_URI_PERMISSION
         | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
         | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION;
+    private static final int REQ_RUN_COMMAND_PERMISSION = 100;
 
     private WebView webView;
     @Nullable
@@ -71,7 +73,13 @@ public class MainActivity extends AppCompatActivity {
             settings.setAllowContentAccess(true);
             Log.d(TAG, "BOOT: webview settings applied");
 
-            bridge = new WebAppInterface(this, webView);
+            Intent resultIntent = new Intent(this, TermuxResultReceiver.class);
+            resultIntent.setAction("com.termuxbackground.TERMUX_RESULT");
+            resultIntent.putExtra("com.termuxbackground.origin", "termux-background-result");
+            PendingIntent termuxResultPendingIntent = PendingIntent.getBroadcast(this, 0, resultIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+
+            bridge = new WebAppInterface(this, webView, termuxResultPendingIntent);
             webView.addJavascriptInterface(bridge, "Android");
 
             webView.setWebViewClient(new WebViewClient() {
@@ -128,10 +136,23 @@ public class MainActivity extends AppCompatActivity {
             webView.loadUrl("file:///android_asset/termux-background-ui.html");
             Log.d(TAG, "BOOT: webview loadUrl issued");
 
+            if (isPackageInstalled("com.termux")
+                    && checkSelfPermission("com.termux.permission.RUN_COMMAND") != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{"com.termux.permission.RUN_COMMAND"}, REQ_RUN_COMMAND_PERMISSION);
+            }
+
         } catch (Exception e) {
             Log.e(TAG, "BOOT: Fatal error during onCreate", e);
             lastError = e.getMessage();
             showFallbackUI(e);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_RUN_COMMAND_PERMISSION && webView != null) {
+            webView.post(() -> webView.evaluateJavascript("refreshStatus()", null));
         }
     }
 

@@ -152,12 +152,12 @@
         lastStatus = status;
         if (!status.termuxInstalled) {
           setState('Blocked: Install Termux', 'Termux is required.', true, true);
-        } else if (!status.termuxApiInstalled) {
-          setState('Blocked: Install Termux:API', 'Install the Termux:API add-on to enable Apply.', true, true);
+        } else if (!status.canRunCommands && !status.runCommandPermissionGranted) {
+          setState('Blocked: Permission needed', 'Allow "Run commands in Termux" for Termux Background (Settings > Apps > Termux Background > Permissions > Additional permissions).', true, true);
         } else if (!status.canRunCommands) {
-          setState('Blocked', 'Termux:API broadcast not available.', true, true);
+          setState('Blocked', status.lastError || 'Termux RUN_COMMAND unavailable.', true, true);
         } else {
-          setState('Ready', 'Termux + Termux:API detected. Select an image and press Apply.', false, false);
+          setState('Ready', 'Termux detected. Select an image and press Apply. (If nothing happens, run in Termux: echo allow-external-apps=true >> ~/.termux/termux.properties)', false, false);
         }
       } catch (err) {
         setState('Error', 'Could not read status: ' + err.message, true, true);
