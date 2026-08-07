@@ -3,7 +3,7 @@
 mkdir -p termux-background-deb/DEBIAN
 cat > termux-background-deb/DEBIAN/control << EOM
 Package: termux-background
-Version: 1.0.2
+Version: 1.5.0
 Architecture: all
 Maintainer: Justadudeinspace
 Description: Termux plugin to apply background image.
